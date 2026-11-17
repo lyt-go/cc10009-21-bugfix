@@ -31,5 +31,43 @@ body { margin: 0; background: #f6f8fb; color: #1f2937; }
 .btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
 .btn.ghost { background: transparent; }
 .link { border: none; background: none; color: var(--brand); cursor: pointer; padding: 0; }
-.page-foot { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--muted); }
+.page-foot { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--muted); gap: 12px; }
 .error-text { color: #b42318; }
+.info-text { color: #067647; }
+.link:disabled { color: #94a3b8; cursor: not-allowed; }
+.row-selected { background: #eff6ff; }
+
+/* 面板与表单 */
+.panel { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin: 14px 0; }
+.panel h3 { margin: 0 0 10px; font-size: 15px; }
+.panel h4 { margin: 14px 0 6px; font-size: 13px; color: #334155; }
+.panel-head { display: flex; justify-content: space-between; align-items: center; }
+.panel-meta { color: var(--muted); font-size: 12px; margin: 4px 0; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.panel-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin-bottom: 10px; }
+.panel-fields input, .panel-fields select { width: 100%; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; }
+.filter-item input, .filter-item select { padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; }
+.sub-table { margin: 6px 0; }
+.detail-panel { border-color: #93c5fd; }
+.snapshot-detail { background: #f8fafc; border: 1px dashed var(--border); border-radius: 6px; padding: 8px 12px; margin-top: 8px; }
+.drift-list { margin: 6px 0; padding-left: 18px; font-size: 12px; }
+.drift-list.warn { color: #b54708; }
+.drift-list.ok, .panel-meta.ok { color: #067647; }
+.ledger-count { color: var(--muted); font-size: 11px; margin-left: 4px; }
+
+/* 状态标签与结论徽标 */
+.status-tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; white-space: nowrap; }
+.status-草稿 { background: #f1f5f9; color: #475569; }
+.status-生成中 { background: #fef3c7; color: #b45309; }
+.status-已生成 { background: #e0f2fe; color: #0369a1; }
+.status-已确认 { background: #dcfce7; color: #15803d; }
+.status-已归档 { background: #ede9fe; color: #6d28d9; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; white-space: nowrap; }
+.badge-合格 { background: #dcfce7; color: #15803d; }
+.badge-待改进 { background: #fef3c7; color: #b45309; }
+.badge-不合格 { background: #fee2e2; color: #b91c1c; }
+.badge-待生成 { background: #f1f5f9; color: #64748b; }
+
+@media (max-width: 1100px) {
+  .form-grid { grid-template-columns: 1fr; }
+}

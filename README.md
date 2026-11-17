@@ -69,10 +69,32 @@ npm run dev
 
 ## 约定
 
-- 每个模块的前端页面在 `frontend/src/views/<模块>/index.vue`，后端接口在
+- 每个模块的前端页面在 `frontend/src/views/<模块>/index.tsx`，后端接口在
   `backend/app/routers/<模块>.py`，业务规则在 `backend/app/services/<模块>.py`。
 - 列表接口统一返回 `{ items, total, page, size }`，动作接口统一返回 `{ ok, message }`。
 - 状态流转只允许在 `app/services` 里改，路由层不做业务判断。
+- 静态路径（如 `/export`）必须声明在动态路径 `/{entry_id}` 之前，否则会被动态路由吞掉。
+
+## 采集质量链路
+
+按「抓取作业 URL 结果 → 字段提取覆盖率 → 质量报告快照 → 确认/归档 → 回写字段提取侧」贯通：
+
+1. `POST /api/qualityreport/url-results` 登记作业 URL 抓取结果（按 作业+版本+URL 幂等），
+   新一轮抓取或失败 URL 更正以新的「作业版本」写入，历史版本保留。
+2. `POST /api/qualityreport/{id}/actions` 执行「生成报告」：读取最新作业版本的 URL 结果与
+   内容提取器的版本化字段覆盖率，校验 `成功 + 失败 = 总数` 后冻结指标，生成质量结论、
+   写入 `quality_snapshot`（作业质量清单数据集）并把报告统计字段全部落库。
+3. 状态机：草稿 → 生成中 → 已生成 → 已确认 → 已归档。未生成完成不能确认，未确认不能归档；
+   确认后快照冻结，`POST /api/contentextract/{id}/coverage` 命中已确认提取版本会被拒绝。
+4. 并发与幂等：同一报告并发生成由服务端锁串行化，同 `request_id` 或相同数据指纹的重复提交
+   幂等返回，只产生一个结论；生成回调按 `callback_id` 幂等，重复到达不重复累计指标。
+5. 版本冲突：确认后失败 URL 被更正并重试生成时，历史已确认结论优先保留，新一轮结果另建快照，
+   两组作业版本依据并存，报告的「版本冲突」字段记录处置过程。
+6. 复核与文件：`GET /api/qualityreport/{id}/snapshots/{version}` 复核来源 URL 与提取版本漂移；
+   `GET /api/qualityreport/{id}/conclusion` 返回 JSON（可书签）或 `?format=txt` 下载附件；
+   生成/确认两阶段的质量结论通过幂等流水回写到内容提取侧清单。
+
+后端测试：`cd backend && .venv/bin/python -m unittest discover -s tests`
 
 领域：数据工程
 子方向：数据采集、爬虫与RPA

@@ -20,14 +20,22 @@ STATUSES = ["草稿", "提取器评审中", "已发布", "已废弃"]
 def list_entries(
     keyword: str | None = Query(default=None, description="按提取器编号检索"),
     status: str | None = Query(default=None, description="草稿、提取器评审中、已发布、已废弃"),
+    job_no: str | None = Query(default=None, description="按关联作业编号检索"),
     page: int = 1,
     size: int = 20,
 ) -> PageResult[dict]:
-    """按提取器编号与状态过滤内容提取列表；没有数据时返回空页，不报错。"""
+    """按提取器编号、关联作业与状态过滤内容提取列表；没有数据时返回空页，不报错。"""
     if size > 200:
         raise HTTPException(status_code=400, detail="每页最多 200 条，请缩小分页范围")
-    items, total = service.list_entries(keyword=keyword, status=status, page=page, size=size)
+    items, total = service.list_entries(keyword=keyword, status=status, job_no=job_no, page=page, size=size)
     return PageResult(items=items, total=total, page=page, size=size)
+
+
+@router.get("/export")
+def export_entries() -> dict[str, Any]:
+    """导出内容提取清单：返回当前过滤条件下的全量数据。"""
+    items, total = service.list_entries(page=1, size=10000)
+    return {"module": "contentextract", "total": total, "items": items}
 
 
 @router.get("/{entry_id}", response_model=dict)
@@ -58,8 +66,16 @@ def run_action(entry_id: int, payload: EntryPayload) -> ActionResult:
     return ActionResult(ok=True, message=message, entry=entry)
 
 
-@router.get("/export")
-def export_entries() -> dict[str, Any]:
-    """导出内容提取清单：返回当前过滤条件下的全量数据。"""
-    items, total = service.list_entries(page=1, size=10000)
-    return {"module": "contentextract", "total": total, "items": items}
+@router.post("/{entry_id}/coverage", response_model=ActionResult)
+def update_coverage(entry_id: int, payload: EntryPayload) -> ActionResult:
+    """字段覆盖率写入：命中已确认快照的版本会被拒绝，重复 request_id 幂等。"""
+    if "字段覆盖率" not in payload.values:
+        return ActionResult(ok=False, message="缺少字段覆盖率")
+    entry, message = service.update_coverage(
+        entry_id,
+        coverage=payload.values.get("字段覆盖率"),
+        request_id=str(payload.values.get("request_id") or "").strip() or None,
+    )
+    if entry is None:
+        return ActionResult(ok=False, message=message)
+    return ActionResult(ok=True, message=message, entry=entry)
